@@ -37,7 +37,7 @@ type Msg
     | Tick
     | Step
     | ToggleRunning
-    | Restart
+    | Reset
 
 
 -- constants
@@ -143,7 +143,7 @@ update msg model =
         ToggleRunning ->
             ( { model | running = not model.running }, Cmd.none )
 
-        Restart ->
+        Reset ->
             ( { model | generation = 1 }, generateRandomGrid model.width model.height )
 
 -- view function
@@ -176,8 +176,8 @@ view model =
                 [ onClick Step, disabled model.running ]
                 [ text "Step" ]
             , button
-                [ onClick Restart ]
-                [ text "Restart" ]
+                [ onClick Reset ]
+                [ text (if model.running then "Restart" else "Reset") ]
             ]
         , div [] [ text ("Generation: " ++ String.fromInt model.generation) ]
         ]
