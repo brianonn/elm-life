@@ -62,13 +62,6 @@ cellSize = 5
 cellSizePx : String
 cellSizePx = String.fromInt cellSize ++ "px"
 
--- styles
-buttonStyle : List (Html.Attribute msg)
-buttonStyle =
-    [ style "margin-left" "10px"
-    , style "margin-top" "2px"
-    ]
-
 -- initialization
 randomGrid : Int -> Int -> Random.Generator Grid
 randomGrid w h =
@@ -157,7 +150,12 @@ update msg model =
 -- This renders the grid as a series of divs with CSS-based "pixels" and a manual "Step" button
 styledButton : List (Html.Attribute msg) -> List (Html msg) -> Html msg
 styledButton attrs children =
-    button (buttonStyle ++ attrs ) children
+    let buttonStyle =
+            [ style "margin-left" "10px"
+            , style "margin-top" "2px"
+            ]
+    in
+    button ( attrs ++ buttonStyle ) children
 
 view : Model -> Html Msg
 view model =
