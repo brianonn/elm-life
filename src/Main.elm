@@ -146,7 +146,7 @@ update msg model =
         Reset ->
             ( { model | generation = 1 }, generateRandomGrid model.width model.height )
 
--- view function
+-- view functions
 -- This renders the grid as a series of divs with CSS-based "pixels" and a manual "Step" button
 styledButton : List (Html.Attribute msg) -> List (Html msg) -> Html msg
 styledButton attrs children =
@@ -157,26 +157,30 @@ styledButton attrs children =
     in
     button ( attrs ++ buttonStyle ) children
 
+renderGrid : Grid -> Html Msg
+renderGrid grid =
+    div []
+        (Array.toList grid
+            |> List.indexedMap (\y row ->
+                div [ style "display" "flex" ]
+                    (Array.toList row
+                        |> List.indexedMap (\x cell ->
+                            div
+                                [ style "width" cellSizePx
+                                , style "height" cellSizePx
+                                , style "background-color" (if cell then "black" else "white")
+                                , style "border" "1px solid #ccc"
+                                ]
+                                []
+                        )
+                )
+            )
+        )
+
 view : Model -> Html Msg
 view model =
     div []
-        [ div []
-            (Array.toList model.grid
-                |> List.indexedMap (\y row ->
-                    div [ style "display" "flex" ]
-                        (Array.toList row
-                            |> List.indexedMap (\x cell ->
-                                div
-                                    [ style "width" cellSizePx
-                                    , style "height" cellSizePx
-                                    , style "background-color" (if cell then "black" else "white")
-                                    , style "border" "1px solid #ccc"
-                                    ]
-                                    []
-                            )
-                    )
-                )
-            )
+        [ renderGrid model.grid
         , div []
             [ styledButton
                 [ onClick ToggleRunning ]
