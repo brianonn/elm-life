@@ -11,7 +11,7 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, div, button, text)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (style, disabled)
 import Html.Events exposing (onClick)
 import Array exposing (Array)
 import Time exposing (Posix)
@@ -29,13 +29,16 @@ type alias Model =
     , width : Int
     , height : Int
     , generation : Int
+    , running : Bool
     }
 
 type Msg
-    = Tick
+    = NewRandomGrid Grid
+    | Tick
     | Step
-    | NewRandomGrid Grid
+    | ToggleRunning
     | Restart
+
 
 -- constants
 width : Int
@@ -50,6 +53,7 @@ initialModel =
     , width = width
     , height = height
     , generation = 1
+    , running = False
     }
 
 cellSize : Int
@@ -78,10 +82,12 @@ init : () -> ( Model, Cmd Msg )
 init _ = ( initialModel, generateRandomGrid width height )
 
 -- subscriptions (for animations)
--- You can switch to manual stepping by removing this and wiring a button.)
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Time.every 300 (\_ -> Tick)
+subscriptions model =
+    if model.running then
+        Time.every 300 (\_ -> Tick)
+    else
+        Sub.none
 
 -- logic
 nextGen : Model -> Grid
@@ -129,7 +135,13 @@ update msg model =
             ( { model | grid = nextGen model, generation = model.generation + 1 }, Cmd.none )
 
         Step ->
-            ( { model | grid = nextGen model, generation = model.generation + 1 }, Cmd.none )
+            if model.running then
+                ( model, Cmd.none ) -- step is a NOP when auto-running
+            else
+                ( { model | grid = nextGen model, generation = model.generation + 1 }, Cmd.none )
+
+        ToggleRunning ->
+            ( { model | running = not model.running }, Cmd.none )
 
         Restart ->
             ( { model | generation = 1 }, generateRandomGrid model.width model.height )
@@ -156,9 +168,17 @@ view model =
                     )
                 )
             )
-        , div [] [ button [ onClick Step ] [ text "Step" ]
-                 , button [ onClick Restart ] [ text "Restart" ]
-                 ]
+        , div []
+            [ button
+                [ onClick ToggleRunning ]
+                [ text (if model.running then "Stop" else "Start") ]
+            , button
+                [ onClick Step, disabled model.running ]
+                [ text "Step" ]
+            , button
+                [ onClick Restart ]
+                [ text "Restart" ]
+            ]
         , div [] [ text ("Generation: " ++ String.fromInt model.generation) ]
         ]
 
