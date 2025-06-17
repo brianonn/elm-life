@@ -10,12 +10,13 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, div, button, text)
-import Html.Attributes exposing (style, disabled)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, button, text, input)
+import Html.Attributes exposing (type_, style, disabled, min, max, step, value)
+import Html.Events exposing (onClick, onInput)
 import Array exposing (Array)
 import Time exposing (Posix)
 import Random
+import String exposing (toInt)
 
 -- types
 type alias Cell =
@@ -30,11 +31,13 @@ type alias Model =
     , height : Int
     , generation : Int
     , running : Bool
+    , tickInterval : Int -- milliseconds
     }
 
 type Msg
     = NewRandomGrid Grid
     | Tick
+    | SetTickInterval Int
     | Step
     | ToggleRunning
     | Reset
@@ -54,6 +57,7 @@ initialModel =
     , height = height
     , generation = 1
     , running = False
+    , tickInterval = 300
     }
 
 cellSize : Int
@@ -85,7 +89,7 @@ init _ = ( initialModel, generateRandomGrid width height )
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if model.running then
-        Time.every 300 (\_ -> Tick)
+        Time.every (toFloat model.tickInterval) (\_ -> Tick)
     else
         Sub.none
 
@@ -134,6 +138,9 @@ update msg model =
         Tick ->
             ( { model | grid = nextGen model, generation = model.generation + 1 }, Cmd.none )
 
+        SetTickInterval newInterval ->
+            ( { model | tickInterval = newInterval }, Cmd.none )
+
         Step ->
             if model.running then
                 ( model, Cmd.none ) -- step is a NOP when auto-running
@@ -153,11 +160,12 @@ styledButton attrs children =
     let buttonStyle =
             [ style "margin-left" "10px"
             , style "margin-top" "2px"
+            , style "margin-bottom" "2px"
             ]
     in
     button ( attrs ++ buttonStyle ) children
 
-renderGrid : Grid -> Html Msg
+renderGrid : Grid -> Html msg
 renderGrid grid =
     div []
         (Array.toList grid
@@ -177,6 +185,31 @@ renderGrid grid =
             )
         )
 
+renderSlider : Int -> Int -> Int -> Int -> Html Msg
+renderSlider min_ max_ step_ value_ =
+    let
+        valueStr = String.fromInt value_
+        minStr   = String.fromInt min_
+        maxStr   = String.fromInt max_
+        stepStr  = String.fromInt step_
+    in
+    div
+        [ style "display" "inline-block"
+        , style "margin-left" "20px"
+        , style "vertical-align" "text-top"
+        ]
+        [ input
+            [ type_ "range"
+            , Html.Attributes.min minStr
+            , Html.Attributes.max maxStr
+            , step stepStr
+            , value valueStr
+            , onInput (\str -> SetTickInterval (Maybe.withDefault 300 (String.toInt str)))
+            ]
+            []
+        , div [ style "margin-top" "-2px"] [ text ("Speed: " ++ valueStr ++ " ms") ]
+        ]
+
 view : Model -> Html Msg
 view model =
     div []
@@ -191,8 +224,10 @@ view model =
             , styledButton
                 [ onClick Reset ]
                 [ text (if model.running then "Restart" else "Reset") ]
+            , renderSlider 50 2000 50 model.tickInterval
             ]
         , div [] [ text ("Generation: " ++ String.fromInt model.generation) ]
+
         ]
 
 -- main entrypoint
