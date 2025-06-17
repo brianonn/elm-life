@@ -63,3 +63,6 @@ The generation counter is at the bottom of the page.
 ## Cleaning up
 The command `make clean` will remove any built files from the local repository.
 
+
+## Screenshot
+![screenshot](images/screenshot.png)
