@@ -1,5 +1,25 @@
-SOURCES := src/Main.elm
+SOURCES      := src/Main.elm
+UNAME_S      := $(shell uname -s | tr A-Z a-z)
+ifeq ($(suffix $(SHELL)),.exe)
+    # Windows system .
+    # TODO: MinGW/MinGW-w64 systems
+    OS_NAME ?= windows
+else
+    # Non-Windows systems
+    # I expect Microsoft WSL to identify as 'linux'
+    OS_NAME ?= $(UNAME_S)
+endif
 
+## OS specific webpage opener commands.
+## You can also specify OPEN=<command>, for example, `make OPEN=opera run`
+OPEN-linux   := chromium  # xdg-open is better but you can also force a specific browser here too
+OPEN-darwin  := open
+OPEN-windows := start ""
+OPEN         := $(OPEN-$(OS_NAME))
+
+##
+## make targets below
+##
 all: help
 
 build: main.js		## (default) Build the standard version of the application
